@@ -1,0 +1,218 @@
+AUDITORIA DO APP FINA — PWA
+============================
+
+ESTRUTURA ANTES vs DEPOIS
+- Antes: 1 arquivo HTML único de 2,4MB com ícones, manifest e 5 fontes
+  Montserrat embutidos em base64 dentro do próprio HTML.
+- Depois: pasta organizada com index.html, manifest.json, sw.js,
+  css/styles.css, js/app.js, icons/ (5 arquivos PNG/JPG) e fonts/
+  (5 arquivos .otf). index.html caiu de 2,4MB para ~108KB.
+
+ARQUIVOS GERADOS
+- index.html       (~108KB) — estrutura HTML limpa, sem base64 embutido
+- manifest.json     (4KB)   — extraído do data URI, ícones apontando p/ arquivos reais
+- sw.js              (4KB)  — service worker extraído (antes só existia como Blob inline)
+- css/styles.css    (60KB)  — CSS extraído, fontes via url() externas
+- js/app.js         (144KB) — os 3 blocos <script> originais, concatenados na ordem
+- icons/icon-192.png, icon-512.png, apple-touch-icon.png — gerados via resize
+  real do logo (a versão original reusava a MESMA imagem 2000x2000 para
+  todos os tamanhos, sem otimização)
+- icons/logo-fina.jpg, login-logo.png — imagens usadas no app (avatar do chat,
+  tela de login/loading)
+- fonts/Montserrat-{Regular,Bold,SemiBold,ExtraBold,Black}.otf
+
+BUGS ENCONTRADOS E CORRIGIDOS
+1. `.login-input` (campos de e-mail/senha da tela de login) estava com
+   font-size: 15px. Em iOS, qualquer input com fonte < 16px causa o zoom
+   automático do Safari ao focar o campo. Corrigido para 16px.
+2. `.periodo-date-input` (filtro de período/datas) estava em 13px e não
+   fazia parte da regra `!important` de correção de zoom do iOS já
+   existente no CSS — também causava zoom indevido. Adicionado à regra
+   e aplicado font-size: 16px !important.
+3. Bug de runtime: o JS chama `document.getElementById('parcelas-subtitle')`
+   sem nenhum elemento com esse id existir no HTML (em 4 lugares,
+   nenhum protegido por verificação de null). Isso quebrava silenciosamente
+   a atualização do texto "Total mensal: R$X" na aba Parcelas.
+   Corrigido adicionando id="parcelas-subtitle" ao <p> de subtítulo
+   já existente na tela.
+4. Service worker original só existia como Blob inline criado em
+   runtime, sem cache do "app shell" (HTML/CSS/JS) e sem versionamento/
+   limpeza de caches antigos. Reescrito como sw.js separado com
+   precache do shell, limpeza de versões antigas no `activate` e
+   fallback offline para index.html em navegações.
+5. Ícones do manifest/head reaproveitavam a MESMA imagem 2000x2000 para
+   todos os tamanhos declarados (192, 512, apple-touch-icon), sem
+   redimensionamento real — desperdício de banda no carregamento do
+   <head>. Gerados ícones redimensionados de verdade (192x192, 512x512,
+   apple-touch-icon 180x180).
+
+VERIFICAÇÕES DE PWA/iOS QUE JÁ ESTAVAM CORRETAS (mantidas)
+- viewport com viewport-fit=cover e user-scalable=no
+- apple-mobile-web-app-capable, status-bar-style black-translucent,
+  apple-mobile-web-app-title
+- env(safe-area-inset-top/bottom) aplicado no header e bottom-nav
+- altura do app via variável JS --app-height (substitui 100vh/100dvh
+  de forma deliberada, evitando bug conhecido do iOS PWA em standalone)
+- -webkit-overflow-scrolling: touch e overscroll-behavior: none/contain
+  nas áreas de rolagem e no body, evitando o "rubber-band scroll"
+- -webkit-tap-highlight-color: transparent
+
+VALIDAÇÃO TÉCNICA
+- js/app.js: sintaxe validada com `node -c` — sem erros
+- css/styles.css: chaves balanceadas (467 aberturas / 467 fechamentos)
+- manifest.json: JSON válido
+- Nenhum id duplicado no HTML
+- Nenhum onclick/oninput/onchange referenciando função inexistente
+
+
+════════════════════════════════════════
+PASSO 2 (v5) — MERGE DE EXPORT MONOLÍTICO MAIS RECENTE
+════════════════════════════════════════
+
+Um novo export monolítico do app (finaapp_5.html, 5578 linhas, ~2,5MB)
+foi recebido com funcionalidades novas. Este passo extraiu o CSS/JS/HTML
+novos e fez o merge com a estrutura limpa de pastas já existente
+(icons/, fonts/, manifest.json e os <head> tags permaneceram os mesmos,
+reaproveitados como estavam — não foram re-extraídos do novo arquivo).
+
+NOVAS FUNCIONALIDADES INCORPORADAS
+- Crop de avatar (overlay de recorte circular com zoom, canvas
+  `#cropCanvas`, slider `.crop-zoom-row`) ao trocar foto de perfil.
+- Diálogo de confirmação customizado (`.confirm-overlay`/`.confirm-dialog`)
+  substituindo `confirm()` nativo do navegador.
+- Tela de "Atalho rápido" (`.quickadd-overlay`) para registrar gasto/
+  entrada via iOS Shortcuts sem abrir o app inteiro.
+- Alternância de modo escuro (`.dark-mode-toggle-row`/`.dark-toggle-switch`)
+  na tela de tema, com persistência em `state.darkMode`.
+- Grade de temas (`.theme-grid`) reformulada visualmente.
+
+BUGS ENCONTRADOS E CORRIGIDOS NESTE PASSO
+1. REGRESSÃO: ícones, manifest e fontes voltaram a ser referenciados via
+   base64 inline no novo export (mesmo padrão wasteful do primeiro
+   arquivo monolítico). Mantidos os arquivos reais já existentes em
+   icons/, fonts/ e manifest.json — <head> do repo preservado como
+   estava, sem re-embutir nada.
+2. REGRESSÃO: 4 tags <img> no corpo do HTML (logo da tela de login,
+   ícone dos termos, logo da tela de loading e avatar do chat) vieram
+   com a imagem em base64 inline (~300KB cada) em vez de referenciar
+   icons/login-logo.png e icons/logo-fina.jpg. Restaurado para usar os
+   arquivos reais — index.html caiu de ~427KB para ~114KB.
+3. REGRESSÃO: `.login-input` voltou a ter font-size: 15px, causando o
+   zoom automático do Safari iOS ao focar e-mail/senha no login.
+   Corrigido de volta para 16px.
+4. REGRESSÃO: `.periodo-date-input` continuava fora da regra de fix de
+   zoom do iOS (`.form-input, .form-select, .chat-textarea`).
+   Adicionado à lista de seletores com font-size: 16px !important.
+5. REGRESSÃO: `.modal-overlay` voltou com z-index: 250 e `.modal-sheet`
+   voltou com max-height: 88% (em vez de 90vh) — revertido para os
+   valores corrigidos anteriormente (z-index: 100, max-height: 90vh).
+   Verificado que z-index 100 continua consistente com os overlays
+   novos: onboarding (500) < confirm (600) < quickadd (650) < crop (700),
+   todos acima do modal genérico, sem conflito de empilhamento.
+   Restaurada também a regra `.modal-handle` que tinha sido removida.
+6. REGRESSÃO GRAVE: o registro do service worker voltou a usar a
+   abordagem de Blob inline (`new Blob([swCode])`) sem precache do
+   app shell, sem versionamento e sem fallback offline — exatamente o
+   anti-padrão já corrigido na primeira auditoria. Removido o bloco de
+   Blob e restaurado `navigator.serviceWorker.register('sw.js')`,
+   apontando para o sw.js real do projeto. Versão do cache em sw.js
+   incrementada de fina-v2 para fina-v3 para forçar a atualização do
+   cache em clientes já instalados.
+7. Bug de runtime (recorrente): `getElementById('parcelas-subtitle')`
+   continuava sem id correspondente no novo HTML — reaplicado
+   id="parcelas-subtitle" no <p> de subtítulo da aba Parcelas.
+8. Bug de runtime (novo): `getElementById('cartaoModalTitle')` e
+   `getElementById('cartaoSaveBtn')` são chamados em `resetCartaoForm()`
+   e `editCartao()` para trocar o título do modal ("Novo cartão" /
+   "Editar cartão") e o texto do botão ("Adicionar cartão" / "Salvar
+   alterações"), mas nenhum dos dois elementos tinha esses ids no
+   modal de cartão (diferente dos modais de meta/dívida/parcela, que
+   já seguiam o padrão `<nome>ModalTitle`/`<nome>SaveBtn` corretamente).
+   As chamadas tinham guarda de nulo (`if (title) ...`), então falhavam
+   silenciosamente sem quebrar o app, mas o modal nunca trocava de
+   título/texto ao editar um cartão existente. Adicionados os ids
+   faltantes ao markup.
+
+VERIFICAÇÕES FEITAS SEM ENCONTRAR PROBLEMAS NESTA RODADA
+- Nenhum outro input/textarea/select com font-size < 16px (todas as
+  classes usadas em campos de formulário — form-input, form-select,
+  chat-textarea, login-input, onboard-input, periodo-date-input — estão
+  cobertas pela regra de fix do zoom do iOS).
+- Nenhum onclick/oninput/onchange novo referenciando função inexistente.
+- Nenhum id duplicado introduzido pelas novas seções (crop, confirm,
+  quickadd, dark mode toggle).
+- Os 3 novos overlays de tela cheia (crop, confirm, quickadd) não têm
+  conteúdo internamente rolável, então não precisam de
+  -webkit-overflow-scrolling/overscroll-behavior próprios — herdam
+  -webkit-tap-highlight-color: transparent do seletor universal global.
+- safe-area-inset, overscroll-behavior e -webkit-overflow-scrolling
+  continuam aplicados corretamente no header/bottom-nav/scroll-areas.
+
+VALIDAÇÃO TÉCNICA (v5)
+- js/app.js: sintaxe validada com `node -c` — sem erros
+- css/styles.css: chaves balanceadas (525 aberturas / 525 fechamentos)
+- manifest.json: JSON válido (inalterado)
+- Nenhum id duplicado no HTML
+- Nenhum getElementById referenciando id inexistente (exceto 'typing',
+  que é criado dinamicamente em runtime via `el.id='typing'`, falso
+  positivo esperado)
+- Nenhum onclick/oninput/onchange referenciando função inexistente
+- index.html: ~114KB (sem base64 embutido)
+- css/styles.css: ~66KB (fontes via url() externas, sem base64)
+- js/app.js: ~172KB (3 blocos de script do export concatenados, com o
+  registro do service worker corrigido)
+
+════════════════════════════════════════
+PASSO 3 (v6) — MERGE DE EXPORT MONOLÍTICO MAIS RECENTE
+════════════════════════════════════════
+
+Um novo export monolítico (finaapp_6.html, 5585 linhas, ~2,56MB) foi
+recebido. Comparação completa (HTML/CSS/JS extraídos e diffados contra
+a estrutura limpa de pastas) mostrou que quase todas as diferenças eram
+as MESMAS regressões já documentadas no Passo 2 (export tool sempre
+reembute base64, perde os ids de cartão, perde a regra de zoom do iOS
+em login-input, etc.) — nenhuma delas foi reaplicada, pois os arquivos
+reais (icons/, fonts/, manifest.json, css/styles.css) já estavam
+corrigidos e foram mantidos como estavam.
+
+MELHORIAS REAIS INCORPORADAS (únicas mudanças genuínas do export)
+1. `<meta name="viewport">` ganhou `interactive-widget=resizes-content`,
+   instruindo o Safari/Chrome a de fato encolher a área visível quando o
+   teclado abre, em vez de só deslocar a visualização por cima do
+   conteúdo.
+2. `setAppHeight()` (js/app.js) foi reescrita para parar de "travar" a
+   altura no maior valor já visto indefinidamente. Antes, qualquer
+   redução de altura era ignorada para sempre (pensado para blindar
+   contra o teclado do iOS), o que também impedia o layout do chat de
+   se reorganizar corretamente acima do teclado. Agora há uma janela de
+   acomodação inicial de 2,6s após o boot/orientationchange
+   (`APP_SETTLE_MS`) — só dentro dela quedas de altura são ignoradas
+   (blindagem contra a leitura errada do Safari no cold start). Fora
+   dessa janela, qualquer mudança de altura (inclusive o teclado abrindo)
+   é aplicada normalmente, combinando com o novo `interactive-widget=
+   resizes-content` do viewport.
+
+REGRESSÕES DETECTADAS E IGNORADAS (não reaplicadas — arquivos do repo
+já estavam corretos e foram preservados)
+- Ícones/manifest/fontes reembutidos em base64 no <head>.
+- 4 <img> do corpo com base64 inline em vez de icons/login-logo.png e
+  icons/logo-fina.jpg.
+- `.login-input` voltando para font-size: 15px.
+- `.modal-overlay` (z-index: 250) e `.modal-sheet` (max-height: 88%)
+  voltando aos valores antigos; `.modal-handle` removido.
+- `id="parcelas-subtitle"`, `id="cartaoModalTitle"` e
+  `id="cartaoSaveBtn"` ausentes novamente no HTML.
+- Registro do service worker voltando para Blob inline sem precache,
+  versionamento ou fallback offline.
+- `<meta name="apple-mobile-web-app-capable">` duplicada (bug do
+  próprio export tool, sem efeito prático — ignorada).
+
+VALIDAÇÃO TÉCNICA (v6)
+- js/app.js: sintaxe validada com `node -c` — sem erros
+- css/styles.css: chaves balanceadas (525 aberturas / 525 fechamentos,
+  inalterado — nenhuma mudança real de CSS neste export)
+- manifest.json: JSON válido (inalterado)
+- Nenhum id duplicado no HTML
+- Nenhum getElementById referenciando id inexistente
+- Nenhum onclick/oninput/onchange referenciando função inexistente
+- index.html: ~111KB · css/styles.css: ~66KB · js/app.js: ~172KB

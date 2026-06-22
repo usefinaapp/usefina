@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="theme-color" content="#E13282"/>
+<!-- ── VIEWPORT: sem zoom, sem bounce, tela cheia ── -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"/>
+<!-- ── PWA Android (Chrome) ── -->
+<meta name="mobile-web-app-capable" content="yes"/>
+<!-- ── PWA iOS (Safari) ── -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Fina"/>
+<!-- ── Misc mobile ── -->
+<meta name="format-detection" content="telephone=no"/>
+<meta name="HandheldFriendly" content="true"/>
+<meta name="MobileOptimized" content="390"/>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
+<meta name="msapplication-TileImage" content="icons/icon-192.png"/>
+<meta name="msapplication-TileColor" content="#E13282"/>
+<link rel="manifest" href="manifest.json"/>
+<title>Fina — Suas Finanças</title>
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<script>
+// Force font load immediately
+if (document.fonts) {
+  document.fonts.load("900 16px 'Montserrat'");
+  document.fonts.load("400 16px 'Montserrat'");
+  document.fonts.load("700 16px 'Montserrat'");
+}
+</script>
+<div class="shell" id="app">
+<!-- ════ LOGIN SCREEN ════ -->
+<div class="login-screen" id="loginScreen" style="display:none;">
+  <img src="icons/login-logo.png" class="login-logo" alt="Fina"/>
+  <div class="login-card">
+    <div class="login-title">Bem-vinda de volta!</div>
+    <div class="login-sub">Entre com seu e-mail e senha para acessar</div>
+    <div class="login-field">
+      <label class="login-label">E-mail</label>
+      <input class="login-input" id="loginEmail" type="email" placeholder="seu@email.com" autocomplete="email"/>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Senha</label>
+      <div style="position:relative;">
+        <input class="login-input" id="loginSenha" type="password" placeholder="••••••••" autocomplete="current-password" style="padding-right:46px;width:100%;"/>
+        <button onclick="toggleSenhaVis()" type="button" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:18px;padding:0;display:flex;align-items:center;">
+          <svg class="ti ti-eye" id="senhaVisIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+        </button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-links">
+      <a class="login-link" onclick="openSenhaModal()">Alterar senha de acesso padrão</a>
+      <a class="login-link" style="color:var(--gray-500);font-weight:400;" onclick="showToast('Entre em contato pelo e-mail suporte@fina.app')">Precisa de ajuda para entrar? <strong style="color:var(--p1);">Clique aqui</strong></a>
+    </div>
+    <div class="login-info">A senha padrão do nosso sistema já está inserida no seu login. Caso queira trocar, clique em <strong>Alterar senha</strong>.</div>
+  </div>
+</div>
+
+<!-- ════ TERMOS OVERLAY ════ -->
+<div class="termos-overlay" id="termosOverlay">
+  <div class="termos-card">
+    <div class="termos-icon"><img src="icons/logo-fina.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;pointer-events:none;"/></div>
+    <div class="termos-title">Termos de Uso & Privacidade</div>
+    <div class="termos-text">
+      Para utilizar a <strong>Fina</strong>, sua assistente financeira, é necessário concordar com nossos <strong>Termos de Uso</strong> e <strong>Política de Privacidade</strong>.<br><br>
+      Ao continuar, você declara que leu, compreendeu e está de acordo com as condições da plataforma.
+    </div>
+    <div class="termos-check-row" id="termosCheckRow" onclick="toggleTermos()">
+      <div class="termos-checkbox"><svg class="ti ti-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg></div>
+      <div class="termos-check-label">Li e concordo com os <span onclick="showToast('Termos de uso — em breve disponíveis')">Termos de Uso</span> e <span onclick="showToast('Política de privacidade — em breve disponíveis')">Política de Privacidade</span> da Fina.</div>
+    </div>
+    <button class="login-btn" id="termosBtn" onclick="aceitarTermos()" style="opacity:0.4;cursor:not-allowed;">Continuar</button>
+  </div>
+</div>
+
+<!-- ════ ALTERAR SENHA MODAL ════ -->
+<div class="senha-overlay" id="senhaOverlay" onclick="closeSenhaModal(event)">
+  <div class="senha-sheet">
+    
+    <div class="modal-title-row"><div class="modal-title">Alterar senha</div><button type="button" class="modal-close-btn" onclick="document.getElementById('senhaOverlay').classList.remove('open')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+    <div class="form-group">
+      <label class="form-label">Senha atual</label>
+      <div style="position:relative;">
+        <input class="form-input" id="senhaAtual" type="password" placeholder="••••••••" style="padding-right:46px;width:100%;"/>
+        <button onclick="toggleSenhaVis('senhaAtual','senhaAtualIcon')" type="button" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:18px;padding:0;display:flex;align-items:center;">
+          <svg class="ti ti-eye" id="senhaAtualIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nova senha</label>
+      <div style="position:relative;">
+        <input class="form-input" id="senhaNova" type="password" placeholder="Nova senha" style="padding-right:46px;width:100%;"/>
+        <button onclick="toggleSenhaVis('senhaNova','senhaNovaIcon')" type="button" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:18px;padding:0;display:flex;align-items:center;">
+          <svg class="ti ti-eye" id="senhaNovaIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirmar nova senha</label>
+      <div style="position:relative;">
+        <input class="form-input" id="senhaConfirm" type="password" placeholder="Repita a nova senha" style="padding-right:46px;width:100%;"/>
+        <button onclick="toggleSenhaVis('senhaConfirm','senhaConfirmIcon')" type="button" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:18px;padding:0;display:flex;align-items:center;">
+          <svg class="ti ti-eye" id="senhaConfirmIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+        </button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="salvarSenha()">Salvar nova senha</button>
+  </div>
+</div>
+
+  <div class="bg-blob blob1"></div>
+  <div class="bg-blob blob2"></div>
+
+  <div class="loading-screen" id="loading">
+    <img class="loading-logo-img" src="icons/login-logo.png" alt="Fina"/>
+    <div class="loading-sub">As suas finanças com carinho</div>
+    <div class="loading-bar-bg"><div class="loading-bar-fill" id="loadBar"></div></div>
+  </div>
+
+  <!-- TELA DE CONFIRMAÇÃO — ATALHO RÁPIDO (iOS Shortcuts) -->
+  <div class="quickadd-overlay" id="quickAddOverlay">
+    <div class="quickadd-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg></div>
+    <div class="quickadd-valor" id="quickAddValor">R$ 0,00</div>
+    <div class="quickadd-desc" id="quickAddDesc">Gasto registrado!</div>
+    <div class="quickadd-cat-pill" id="quickAddCatPill"></div>
+  </div>
+
+  <div class="toast" id="toast"><svg class="ti ti-circle-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></svg><span id="toastMsg"></span></div>
+
+  <!-- ONBOARDING -->
+  <div class="onboard-overlay" id="onboard">
+    <div class="onboard-sheet">
+      <div class="onboard-title" id="onboardTitle">Bem-vinda ao Fina!</div>
+      <div class="onboard-sub" id="onboardSub">Sua assistente financeira pessoal.<br>Como posso te chamar?</div>
+      <div class="onboard-avatar-pick" id="onboardAvatarPick" onclick="document.getElementById('onboardAvatarInput').click()"><svg class="ti ti-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" /> <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg></div>
+      <div style="font-size:11px;color:var(--gray-400);margin-bottom:18px;font-weight:400;">Toque para adicionar sua foto</div>
+      <input type="file" id="onboardAvatarInput" accept="image/*" style="display:none" onchange="previewOnboardAvatar(this)"/>
+      <input class="onboard-input" id="onboardName" placeholder="Seu nome..."/>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Como a Fina deve se dirigir a você?</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button id="gBtnF" onclick="selectGenero('f')" style="flex:1;padding:10px 6px;border-radius:12px;border:1.5px solid var(--p-border);background:var(--p-pale);color:var(--p1);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.18s;">Ela / Dela</button>
+          <button id="gBtnM" onclick="selectGenero('m')" style="flex:1;padding:10px 6px;border-radius:12px;border:1.5px solid var(--p-border);background:var(--p-pale);color:var(--p1);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.18s;">Ele / Dele</button>
+          <button id="gBtnN" onclick="selectGenero('n')" style="flex:1;padding:10px 6px;border-radius:12px;border:1.5px solid var(--p-border);background:var(--p-pale);color:var(--p1);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.18s;">Neutro</button>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="finishOnboard()">Começar</button>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- HOME -->
+    <div class="screen active" id="screen-home">
+      <div class="home-header">
+        <div class="home-top">
+          <div>
+            <div class="home-greeting">Olá,</div>
+            <div class="home-name" id="home-name">...</div>
+          </div>
+          <div class="avatar-sm" id="homeAvatar" onclick="switchScreen('perfil')">
+            <svg class="ti ti-user" id="homeAvatarIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+          </div>
+        </div>
+        <div class="saldo-label">Saldo disponível</div>
+        <div class="saldo-value" id="home-saldo">R$ 0,00</div>
+        <div class="stats-row">
+          <div class="stat-mini"><div class="stat-mini-label"><svg class="ti ti-arrow-down-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14" /> <path d="M9 18l3 3l3 -3" /> <path d="M12 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4" /></svg> Entradas</div><div class="stat-mini-value" id="home-entradas">R$0</div></div>
+          <div class="stat-mini"><div class="stat-mini-label"><svg class="ti ti-arrow-up-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v-14" /> <path d="M15 6l-3 -3l-3 3" /> <path d="M12 17a2 2 0 1 0 0 4a2 2 0 0 0 0 -4" /></svg> Gastos</div><div class="stat-mini-value" id="home-gastos">R$0</div></div>
+          <div class="stat-mini"><div class="stat-mini-label"><svg class="ti ti-credit-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></svg> Parcelas</div><div class="stat-mini-value" id="home-parcelas">R$0</div></div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="home-body">
+          <div id="home-alerts-section"></div>
+          <div class="section-label">Metas <a onclick="switchScreen('metas')">ver todas →</a></div>
+          <div id="home-metas"></div>
+          <div class="section-label" style="margin-top:14px;">Últimas movimentações <a onclick="switchScreen('gastos')">ver todas →</a></div>
+          <div id="home-recentes"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="screen" id="screen-chat">
+      <div class="chat-header">
+        <div class="chat-avatar" style="padding:0;overflow:hidden;background:none;box-shadow:0 4px 16px var(--p-shadow);"><img src="icons/logo-fina.jpg" alt="Fina" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;pointer-events:none;"/></div>
+        <div class="chat-head-info"><h3>Fina</h3><p><span class="online-dot"></span> Online agora</p></div>
+        <svg class="ti ti-dots" onclick="switchScreen('ajuda')" style="margin-left:auto;font-size:20px;color:var(--gray-400);cursor:pointer;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M18 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+      </div>
+      <div class="chat-body" id="chatBody"></div>
+
+      <div class="chat-input-area">
+        <textarea class="chat-textarea" id="chatInput" placeholder="Ex: gastei R$30 na Shopee hoje..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()"><svg class="ti ti-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l11 -11" /> <path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" /></svg></button>
+      </div>
+    </div>
+
+    <!-- GASTOS -->
+    <div class="screen" id="screen-gastos">
+      <div class="page-header">
+        <div class="page-header-row">
+          <button class="back-btn" onclick="switchScreen('home')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button>
+          <h2><svg class="ti ti-chart-pie-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9h9" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg> Gastos</h2>
+        </div>
+        <p id="gastos-subtitle" style="padding-left:46px;">Controle seus gastos</p>
+      </div>
+
+      <!-- FILTRO DE PERÍODO -->
+      <div class="gastos-periodo-bar">
+        <button class="periodo-chip" id="pc-dia"    onclick="setPeriodo('dia')">Dia</button>
+        <button class="periodo-chip" id="pc-semana" onclick="setPeriodo('semana')">Semana</button>
+        <button class="periodo-chip active" id="pc-mes" onclick="setPeriodo('mes')">Mês</button>
+        <button class="periodo-chip" id="pc-custom" onclick="setPeriodo('custom')">Personalizado</button>
+      </div>
+
+      <!-- SELETOR DIA -->
+      <div class="periodo-panel" id="panel-dia" style="display:none;">
+        <input type="date" class="periodo-date-input" id="filtro-dia" onchange="applyPeriodo()"/>
+      </div>
+
+      <!-- SELETOR SEMANA -->
+      <div class="periodo-panel" id="panel-semana" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="date" class="periodo-date-input" id="filtro-sem-ini" onchange="applyPeriodo()" style="flex:1;"/>
+          <span style="color:var(--gray-500);font-size:12px;font-weight:600;">até</span>
+          <input type="date" class="periodo-date-input" id="filtro-sem-fim" onchange="applyPeriodo()" style="flex:1;"/>
+        </div>
+      </div>
+
+      <!-- SELETOR MÊS -->
+      <div class="periodo-panel" id="panel-mes" style="display:flex;gap:8px;overflow-x:auto;">
+        <!-- rendered by JS -->
+        <div id="mes-chips-wrap" style="display:flex;gap:8px;padding-bottom:2px;"></div>
+      </div>
+
+      <!-- SELETOR PERSONALIZADO -->
+      <div class="periodo-panel" id="panel-custom" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <input type="date" class="periodo-date-input" id="filtro-custom-ini" style="flex:1;"/>
+          <span style="color:var(--gray-500);font-size:12px;font-weight:600;">até</span>
+          <input type="date" class="periodo-date-input" id="filtro-custom-fim" style="flex:1;"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="periodo-action-btn outline" onclick="limparPeriodo()">Limpar</button>
+          <button class="periodo-action-btn filled" onclick="applyPeriodo()">Aplicar</button>
+        </div>
+      </div>
+
+      <!-- FILTRO DE CATEGORIA -->
+      <div class="periodo-divider"></div>
+      <div style="padding:12px 18px 4px;">
+        <button class="cat-filter-btn" id="catFilterBtn" onclick="openModal('filtroCategoria')">
+          <svg class="ti ti-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227" /></svg>
+          <span id="catFilterLabel">Filtrar por categoria: Todos</span>
+          <svg class="ti ti-chevron-down" style="margin-left:auto;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+        </button>
+      </div>
+
+      <div class="scroll-area">
+        <!-- GRÁFICO -->
+        <div id="chartSection" style="padding-top:12px;"></div>
+
+        <!-- TOTAL DE GASTOS -->
+        <div class="gastos-summary-card" id="gastosSummaryCard">
+          <div class="gastos-summary-row">
+            <div>
+              <div class="gastos-summary-label">Total de gastos</div>
+              <div class="gastos-summary-val" id="gastosTotalVal">R$ 0,00</div>
+            </div>
+            <svg class="ti ti-trending-up" style="font-size:28px;color:var(--p1);opacity:0.4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6 -6l4 4l8 -8" /> <path d="M14 7l7 0l0 7" /></svg>
+          </div>
+        </div>
+
+        <!-- LIMITES MENSAIS -->
+        <div class="gastos-section-btn" onclick="openModal('limites')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="gastos-section-icon"><svg class="ti ti-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M13.41 10.59l2.59 -2.59" /> <path d="M7 12a5 5 0 0 1 5 -5" /></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--gray-900);">Limites mensais</div>
+              <div style="font-size:11px;color:var(--gray-500);">Defina o limite de gasto por categoria</div>
+            </div>
+          </div>
+          <svg class="ti ti-chevron-right" style="color:var(--gray-400);font-size:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+        </div>
+
+        <!-- GERENCIAR CATEGORIAS -->
+        <div class="gastos-section-btn" onclick="openModal('categorias')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="gastos-section-icon"><svg class="ti ti-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3" /></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--gray-900);">Gerenciar categorias</div>
+              <div style="font-size:11px;color:var(--gray-500);">Crie e personalize suas próprias categorias</div>
+            </div>
+          </div>
+          <svg class="ti ti-chevron-right" style="color:var(--gray-400);font-size:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+        </div>
+
+        <!-- GASTOS CONFIRMADOS -->
+        <div class="gastos-group-label"><svg class="ti ti-circle-check" style="color:var(--green);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></svg> Gastos confirmados</div>
+        <div class="gastos-list" id="gastosListConfirmados"></div>
+
+        <!-- GASTOS PENDENTES -->
+        <div class="gastos-group-label" style="margin-top:4px;"><svg class="ti ti-clock" style="color:var(--amber);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" /></svg> Gastos pendentes</div>
+        <div class="gastos-list" id="gastosListPendentes"></div>
+
+      </div>
+      <button class="fab" onclick="openModal('gasto')"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+    </div>
+
+    <!-- ENTRADAS -->
+    <div class="screen" id="screen-entradas">
+      <div class="page-header">
+        <div class="page-header-row">
+          <button class="back-btn" onclick="switchScreen('home')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button>
+          <h2><svg class="ti ti-arrow-down-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14" /> <path d="M9 18l3 3l3 -3" /> <path d="M12 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4" /></svg> Entradas</h2>
+        </div>
+        <p style="padding-left:46px;">Registre suas receitas</p>
+      </div>
+
+      <!-- PERÍODO -->
+      <div class="gastos-periodo-bar">
+        <button class="periodo-chip" id="epc-dia"    onclick="setEntradaPeriodo('dia')">Dia</button>
+        <button class="periodo-chip" id="epc-semana" onclick="setEntradaPeriodo('semana')">Semana</button>
+        <button class="periodo-chip active" id="epc-mes" onclick="setEntradaPeriodo('mes')">Mês</button>
+        <button class="periodo-chip" id="epc-custom" onclick="setEntradaPeriodo('custom')">Personalizado</button>
+      </div>
+      <div class="periodo-panel" id="epanel-dia" style="display:none;">
+        <input type="date" class="periodo-date-input" id="efiltro-dia" onchange="applyEntradaPeriodo()"/>
+      </div>
+      <div class="periodo-panel" id="epanel-semana" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="date" class="periodo-date-input" id="efiltro-sem-ini" onchange="applyEntradaPeriodo()" style="flex:1;"/>
+          <span style="color:var(--gray-500);font-size:12px;font-weight:600;">até</span>
+          <input type="date" class="periodo-date-input" id="efiltro-sem-fim" onchange="applyEntradaPeriodo()" style="flex:1;"/>
+        </div>
+      </div>
+      <div class="periodo-panel" id="epanel-mes" style="display:flex;">
+        <div id="emes-chips-wrap" style="display:flex;gap:8px;padding-bottom:2px;"></div>
+      </div>
+      <div class="periodo-panel" id="epanel-custom" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <input type="date" class="periodo-date-input" id="efiltro-custom-ini" style="flex:1;"/>
+          <span style="color:var(--gray-500);font-size:12px;font-weight:600;">até</span>
+          <input type="date" class="periodo-date-input" id="efiltro-custom-fim" style="flex:1;"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="periodo-action-btn outline" onclick="limparEntradaPeriodo()">Limpar</button>
+          <button class="periodo-action-btn filled" onclick="applyEntradaPeriodo()">Aplicar</button>
+        </div>
+      </div>
+
+      <div class="scroll-area">
+        <!-- TOTAL -->
+        <div class="gastos-summary-card" style="border:1px solid rgba(5,150,105,0.2);margin-top:12px;">
+          <div class="gastos-summary-row">
+            <div>
+              <div class="gastos-summary-label">Total de entradas</div>
+              <div class="gastos-summary-val" id="entradasTotalVal" style="color:var(--green);">R$ 0,00</div>
+            </div>
+            <svg class="ti ti-trending-up" style="font-size:28px;color:var(--green);opacity:0.4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6 -6l4 4l8 -8" /> <path d="M14 7l7 0l0 7" /></svg>
+          </div>
+        </div>
+
+        <!-- AÇÕES -->
+        <div style="display:flex;gap:10px;margin:10px 18px 0;">
+          <button onclick="abrirNovaEntrada()" style="flex:1;padding:11px;background:var(--grad);color:white;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px var(--p-shadow);"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg> Nova entrada</button>
+          <button onclick="abrirNovaEntradaParcelada()" style="flex:1;padding:11px;background:var(--glass);color:var(--p1);border:1.5px solid var(--p-border);border-radius:14px;font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(8px);"><svg class="ti ti-calendar-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v3" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h12" /> <path d="M20 14l2 2h-3" /> <path d="M20 18l2 -2" /> <path d="M19 16a3 3 0 1 0 2 5.236" /></svg> Parcelada</button>
+        </div>
+
+        <!-- GERENCIAR CATEGORIAS -->
+        <div class="gastos-section-btn" id="btnCategoriasEntradas" style="margin-top:10px;" onclick="openModal('categorias')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="gastos-section-icon"><svg class="ti ti-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3" /></svg></div>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--gray-900);">Gerenciar categorias</div>
+              <div style="font-size:11px;color:var(--gray-500);">Personalize as categorias de entradas</div>
+            </div>
+          </div>
+          <svg class="ti ti-chevron-right" style="color:var(--gray-400);font-size:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+        </div>
+
+        <!-- CONFIRMADAS -->
+        <div class="gastos-group-label"><svg class="ti ti-circle-check" style="color:var(--green);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></svg> Entradas confirmadas</div>
+        <div class="gastos-list" id="entradasConfirmadas"></div>
+
+        <!-- PENDENTES -->
+        <div class="gastos-group-label" style="margin-top:4px;"><svg class="ti ti-clock" style="color:var(--amber);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" /></svg> Entradas pendentes</div>
+        <div class="gastos-list" id="entradasPendentes"></div>
+      </div>
+      <button class="fab" onclick="abrirNovaEntrada()"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="screen" id="screen-dashboard">
+      <div class="page-header">
+        <div class="page-header-row">
+          <button class="back-btn" onclick="switchScreen('home')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button>
+          <h2><svg class="ti ti-layout-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /> <path d="M5 16h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /> <path d="M15 12h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /> <path d="M15 4h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /></svg> Visão Geral</h2>
+        </div>
+        <p style="padding-left:46px;">Tudo em um só lugar</p>
+      </div>
+
+      <!-- PERÍODO -->
+      <div class="gastos-periodo-bar">
+        <button class="periodo-chip" id="dpc-dia"    onclick="setDashPeriodo('dia')">Dia</button>
+        <button class="periodo-chip" id="dpc-semana" onclick="setDashPeriodo('semana')">Semana</button>
+        <button class="periodo-chip active" id="dpc-mes" onclick="setDashPeriodo('mes')">Mês</button>
+        <button class="periodo-chip" id="dpc-custom" onclick="setDashPeriodo('custom')">Personalizado</button>
+      </div>
+      <div class="periodo-panel" id="dpanel-mes" style="display:flex;">
+        <div id="dmes-chips-wrap" style="display:flex;gap:8px;padding-bottom:2px;"></div>
+      </div>
+      <div class="periodo-panel" id="dpanel-custom" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <input type="date" class="periodo-date-input" id="dfiltro-custom-ini" style="flex:1;"/>
+          <span style="color:var(--gray-500);font-size:12px;font-weight:600;">até</span>
+          <input type="date" class="periodo-date-input" id="dfiltro-custom-fim" style="flex:1;"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="periodo-action-btn outline" onclick="limparDashPeriodo()">Limpar</button>
+          <button class="periodo-action-btn filled" onclick="applyDashPeriodo()">Aplicar</button>
+        </div>
+      </div>
+      <div class="periodo-panel" id="dpanel-dia" style="display:none;">
+        <input type="date" class="periodo-date-input" id="dfiltro-dia" onchange="applyDashPeriodo()"/>
+      </div>
+      <div class="periodo-panel" id="dpanel-semana" style="display:none;">
+        <div style="display:flex;gap:8px;">
+          <input type="date" class="periodo-date-input" id="dfiltro-sem-ini" onchange="applyDashPeriodo()" style="flex:1;"/>
+          <span style="color:var(--gray-500);font-size:12px;font-weight:600;">até</span>
+          <input type="date" class="periodo-date-input" id="dfiltro-sem-fim" onchange="applyDashPeriodo()" style="flex:1;"/>
+        </div>
+      </div>
+
+      <div class="periodo-divider"></div>
+      <div class="scroll-area">
+        <!-- TOGGLE MÊS / TOTAL -->
+        <div style="display:flex;gap:8px;margin:16px 18px 0;">
+          <button id="dash-toggle-mes" onclick="setDashView('mes')" style="flex:1;padding:11px;border-radius:12px;background:var(--grad);color:white;border:none;font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;box-shadow:0 4px 12px var(--p-shadow);">Este mês</button>
+          <button id="dash-toggle-total" onclick="setDashView('total')" style="flex:1;padding:11px;border-radius:12px;background:var(--glass);color:var(--p1);border:1.5px solid var(--p-border);font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;backdrop-filter:blur(8px);">Total acumulado</button>
+        </div>
+
+        <!-- SALDO DO MÊS -->
+        <div class="gastos-summary-card" style="margin-top:10px;" id="dashSaldoCard">
+          <div class="gastos-summary-row">
+            <div>
+              <div class="gastos-summary-label" id="dashSaldoLabel">Saldo deste mês</div>
+              <div id="dashSaldoVal" style="font-size:28px;font-weight:900;letter-spacing:-1px;">R$ 0,00</div>
+              <div id="dashSaldoStatus" style="font-size:12px;font-weight:700;margin-top:4px;"></div>
+            </div>
+            <svg class="ti ti-wallet" style="font-size:32px;opacity:0.3;color:var(--p1);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" /> <path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" /></svg>
+          </div>
+        </div>
+
+        <!-- GRID RESUMO -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 18px 6px;">
+          <div class="dash-mini-card" id="dashGastosCard">
+            <div class="dash-mini-label">Gastos</div>
+            <div class="dash-mini-val val-neg" id="dashGastosVal">R$ 0,00</div>
+          </div>
+          <div class="dash-mini-card" id="dashEntradasCard">
+            <div class="dash-mini-label">Entradas</div>
+            <div class="dash-mini-val val-pos" id="dashEntradasVal">R$ 0,00</div>
+          </div>
+          <div class="dash-mini-card">
+            <div class="dash-mini-label">Metas ativas</div>
+            <div class="dash-mini-val" id="dashMetasVal" style="color:var(--p1);">0</div>
+          </div>
+          <div class="dash-mini-card">
+            <div class="dash-mini-label">Parcelas/mês</div>
+            <div class="dash-mini-val" id="dashParcelasVal" style="color:var(--amber);">R$ 0,00</div>
+          </div>
+        </div>
+
+        <!-- GRÁFICO POR CATEGORIA -->
+        <div style="margin:14px 0 6px 18px;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;"><svg class="ti ti-chart-donut-3" style="color:var(--p1);font-size:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v5m4 4h5" /> <path d="M8.929 14.582l-3.429 2.918" /> <path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg> Gastos por categoria</div>
+        <div id="dashChartSection"></div>
+      </div>
+    </div>
+
+    <!-- METAS -->
+    <div class="screen" id="screen-metas">
+      <div class="page-header">
+        <div class="page-header-row"><button class="back-btn" onclick="switchScreen('home')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button><h2><svg class="ti ti-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M7 12a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg> Metas</h2></div>
+        <p style="padding-left:46px;">Acompanhe seus objetivos financeiros</p>
+      </div>
+      <div class="scroll-area">
+        <div style="padding:12px 18px;" id="metasList"></div>
+      </div>
+      <button class="fab" onclick="openModal('meta')"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+    </div>
+
+    <!-- DÍVIDAS -->
+    <div class="screen" id="screen-dividas">
+      <div class="page-header">
+        <div class="page-header-row"><button class="back-btn" onclick="switchScreen('home')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button><h2><svg class="ti ti-receipt-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2" /> <path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5m2 0v1.5m0 -9v1.5" /></svg> Dívidas</h2></div>
+        <p style="padding-left:46px;">Controle das suas pendências financeiras</p>
+      </div>
+      <div class="scroll-area">
+        <div id="dividasTotal" style="margin:14px 18px 0;background:var(--glass);border-radius:var(--radius-md);padding:14px 16px;border:1px solid var(--glass-border);backdrop-filter:blur(12px);display:none;">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total devido</div>
+          <div id="dividasTotalVal" style="font-size:28px;font-weight:900;color:var(--red);letter-spacing:-1px;"></div>
+        </div>
+        <div style="padding:12px 18px 0;" id="dividasList"></div>
+      </div>
+      <button class="fab" onclick="openModal('divida')"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+    </div>
+
+    <!-- PARCELAS -->
+    <div class="screen" id="screen-parcelas">
+      <div class="page-header">
+        <div class="page-header-row"><button class="back-btn" onclick="switchScreen('home')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button><h2><svg class="ti ti-list-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5l1.5 1.5l2.5 -2.5" /> <path d="M3.5 11.5l1.5 1.5l2.5 -2.5" /> <path d="M3.5 17.5l1.5 1.5l2.5 -2.5" /> <path d="M11 6l9 0" /> <path d="M11 12l9 0" /> <path d="M11 18l9 0" /></svg> Parcelas</h2></div>
+        <p id="parcelas-subtitle" style="padding-left:46px;">Acompanhe seus pagamentos</p>
+      </div>
+      <div style="padding:10px 18px 0;flex-shrink:0;">
+        <div style="position:relative;">
+          <svg class="ti ti-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M21 21l-6 -6" /></svg>
+          <input id="parcelaBusca" class="form-input" placeholder="Buscar parcela..." style="padding-left:38px;margin-bottom:0;" oninput="renderParcelas()"/>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-bottom:2px;">
+          <span style="font-size:12px;color:var(--gray-500);font-weight:600;">Total ativas: <strong id="parcelaCount" style="color:var(--gray-900);">0</strong></span>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div style="padding:10px 18px;" id="parcelasList"></div>
+      </div>
+      <button class="fab" onclick="openModal('parcela')"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+    </div>
+
+    <!-- CARTÕES -->
+    <div class="screen" id="screen-cartoes">
+      <div class="page-header">
+        <h2><svg class="ti ti-credit-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></svg> Cartões</h2>
+        <p>Gerencie seus cartões de crédito</p>
+      </div>
+      <div class="scroll-area">
+        <div style="padding:12px 18px;" id="cartoesList"></div>
+      </div>
+      <button class="fab" onclick="openModal('cartao')"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+    </div>
+
+    <!-- PERFIL -->
+    <div class="screen" id="screen-perfil">
+      <div class="perfil-header" style="position:relative;">
+        <button onclick="switchScreen('home')" style="position:absolute;top:max(16px, env(safe-area-inset-top));left:16px;background:rgba(255,255,255,0.25);border:none;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;backdrop-filter:blur(8px);transition:all 0.18s;z-index:1;" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button>
+       <div class="perfil-avatar-wrap">
+          <div class="perfil-avatar" id="perfilAvatar" onclick="document.getElementById('perfilAvatarInput').click()">
+          <svg class="ti ti-user" id="perfilAvatarIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+          </div>
+          <div class="perfil-avatar-edit" onclick="document.getElementById('perfilAvatarInput').click()"><svg class="ti ti-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" /> <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg></div>
+        </div>
+        <input type="file" id="perfilAvatarInput" accept="image/*" style="display:none" onchange="updateAvatar(this)"/>
+        <div class="perfil-nome" id="perfilNome">...</div>
+        <div class="perfil-sub" id="perfilEmailDisplay">...</div>
+      </div>
+      <div class="scroll-area">
+        <div class="perfil-body">
+
+          <!-- INFORMAÇÕES PESSOAIS -->
+          <div class="perfil-section">Informações pessoais</div>
+          <div class="perfil-section-card">
+            <div class="perfil-row" onclick="openModal('editNome')">
+              <div class="perfil-row-icon"><svg class="ti ti-user-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /> <path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" /></svg></div>
+              <div class="perfil-row-info"><strong>Nome</strong><span id="perfilNomeItem">...</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+
+            <div class="perfil-row" onclick="openModal('tema')">
+              <div class="perfil-row-icon"><svg class="ti ti-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25" /> <path d="M7.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M11.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M15.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg></div>
+              <div class="perfil-row-info"><strong>Cor do tema</strong><span id="perfilTemaLabel">Rosa</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+          </div>
+
+          <!-- MINHA ASSINATURA -->
+          <div class="perfil-section">Minha assinatura</div>
+          <div class="plano-card" id="planoCard">
+            <div class="plano-badge"><svg class="ti ti-crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4l4 -6" /></svg> Usuária ativa</div>
+            <div class="plano-nome" id="planoNome">Plano Mensal</div>
+            <div class="plano-grid">
+              <div class="plano-info-item">
+                <div class="plano-info-label">Próximo pagamento</div>
+                <div class="plano-info-val" id="planoVenc">—</div>
+              </div>
+              <div class="plano-info-item">
+                <div class="plano-info-label">Período usado</div>
+                <div class="plano-info-val" id="planoPeriodo">—</div>
+              </div>
+              <div class="plano-info-item">
+                <div class="plano-info-label">Data de início</div>
+                <div class="plano-info-val" id="planoInicio">—</div>
+              </div>
+              <div class="plano-info-item">
+                <div class="plano-info-label">Status</div>
+                <div class="plano-info-val">✓ Ativa</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OFERTA ESPECIAL -->
+          <div style="margin:0 18px 14px 18px;">
+            <div style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Oferta especial</div>
+            <div style="font-size:22px;font-weight:900;color:var(--gray-900);letter-spacing:-0.5px;line-height:1.1;">Upgrade de plano</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:6px;line-height:1.5;">Troque seu plano e economize até <strong style="color:var(--p1);">35%</strong> nas mensalidades.</div>
+          </div>
+          <div class="upgrade-card popular" onclick="showToast('Em breve — plano semestral!')">
+            <div class="upgrade-popular-badge">MAIS POPULAR</div>
+            <div class="upgrade-title">Plano Semestral</div>
+            <div class="upgrade-desc">6 meses de acesso completo</div>
+            <div class="upgrade-disc">20% OFF</div>
+          </div>
+          <div class="upgrade-card" onclick="showToast('Em breve — plano anual!')">
+            <div class="upgrade-title">Plano Anual</div>
+            <div class="upgrade-desc">1 ano de acesso — mais econômico</div>
+            <div class="upgrade-disc">35% OFF</div>
+          </div>
+
+          <!-- ZONA DE RISCO -->
+          <div class="perfil-section">Suporte</div>
+          <div class="perfil-section-card">
+            <div class="perfil-row" onclick="switchScreen('ajuda')">
+              <div class="perfil-row-icon"><svg class="ti ti-help-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></svg></div>
+              <div class="perfil-row-info"><strong>Central de ajuda</strong><span>Aprenda a usar o app do zero</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+          </div>
+
+          <div class="perfil-section">Dados e backup</div>
+          <div class="perfil-section-card">
+            <div class="perfil-row" onclick="exportarDados()">
+              <div class="perfil-row-icon green"><svg class="ti ti-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 11l5 5l5 -5" /> <path d="M12 4l0 12" /></svg></div>
+              <div class="perfil-row-info"><strong>Exportar dados</strong><span>Salva um arquivo de backup no seu celular</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+            <div class="perfil-row" onclick="document.getElementById('importarDadosInput').click()">
+              <div class="perfil-row-icon"><svg class="ti ti-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 9l5 -5l5 5" /> <path d="M12 4l0 12" /></svg></div>
+              <div class="perfil-row-info"><strong>Importar dados</strong><span>Restaura um backup salvo anteriormente</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+            <input type="file" id="importarDadosInput" accept=".json" style="display:none" onchange="importarDados(this)"/>
+          </div>
+
+          <div class="perfil-section" style="color:var(--red);">Zona de risco — ações irreversíveis</div>
+          <div class="perfil-section-card">
+            <div class="perfil-row" onclick="confirmLimparChat()">
+              <div class="perfil-row-icon amber"><svg class="ti ti-messages-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18" /> <path d="M11 11a1 1 0 0 1 -1 -1m0 -3.968v-2.032a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10l-3 -3h-3" /> <path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" /></svg></div>
+              <div class="perfil-row-info"><strong>Limpar histórico do chat</strong><span>Apaga todas as conversas</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+            <div class="perfil-row" onclick="confirmClear()">
+              <div class="perfil-row-icon red"><svg class="ti ti-refresh-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /> <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /> <path d="M12 9l0 3" /> <path d="M12 15l.01 0" /></svg></div>
+              <div class="perfil-row-info"><strong style="color:var(--red);">Resetar conta do zero</strong><span>Remove todos os dados financeiros</span></div>
+              <svg class="ti ti-chevron-right arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+            </div>
+          </div>
+
+          <!-- SAIR -->
+          <button class="sair-btn" onclick="confirmarSair()">
+            <svg class="ti ti-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" /></svg> Sair da conta
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- AJUDA -->
+    <div class="screen" id="screen-ajuda">
+      <div class="page-header">
+        <div class="page-header-row">
+          <button class="back-btn" onclick="switchScreen('perfil')" aria-label="Voltar"><svg class="ti ti-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></svg></button>
+          <h2><svg class="ti ti-help-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></svg> Central de Ajuda</h2>
+        </div>
+        <p style="padding-left:46px;">Aprenda a usar o app do absoluto zero</p>
+      </div>
+      <div class="scroll-area">
+        <div style="padding:16px 18px 32px;">
+
+          <!-- INTRODUÇÃO -->
+          <div class="ajuda-section-title">Introdução ao aplicativo</div>
+          <div class="ajuda-card" onclick="toggleAjuda('a1')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6" /></svg></div>
+              <div class="ajuda-card-label">Como o Fina funciona</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a1">
+              O <strong>Fina</strong> é sua assistente financeira pessoal. Aqui você registra gastos, entradas, parcelas, dívidas, cartões e metas, tudo em um só lugar, de forma simples e visual.<br><br>
+              Use o <strong>Chat</strong> para registrar tudo conversando naturalmente, ou use as abas específicas na parte inferior do app: Visão Geral, Gastos, Entradas, Metas, Dívidas, Parcelas e Cartões.<br><br>
+              Funciona <strong>totalmente offline</strong>: seus dados ficam salvos no seu próprio celular, sem depender de internet para registrar nada.
+            </div>
+          </div>
+
+          <!-- CHAT -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Como usar o Chat da Fina</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a2')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-message-circle-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1" /></svg></div>
+              <div class="ajuda-card-label">Como registrar gastos com o chat</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a2">
+              É simples! Escreva no chat como se estivesse falando com uma amiga:<br><br>
+              <div class="ajuda-example">💬 "Gastei R$48 no iFood hoje"</div>
+              <div class="ajuda-example">💬 "Paguei R$120 na farmácia"</div>
+              <div class="ajuda-example">💬 "Comprei R$89 de skincare"</div><br>
+              A Fina identifica o valor, escolhe a categoria mais provável entre mais de 40 categorias diferentes e registra automaticamente na aba de Gastos. Se ela não conseguir identificar a categoria, o gasto vai para "Outros" e ela avisa, podendo então criar uma categoria personalizada se quiser.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a3')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1" /> <path d="M12 7v10" /></svg></div>
+              <div class="ajuda-card-label">Como registrar ganhos com o chat</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a3">
+              Diga qualquer coisa relacionada a receber dinheiro:<br><br>
+              <div class="ajuda-example">💬 "Recebi R$800 de freela"</div>
+              <div class="ajuda-example">💬 "Ganhei R$1500 de salário"</div><br>
+              A entrada é registrada automaticamente e aparece na aba Entradas e no seu saldo geral.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a4')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-credit-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></svg></div>
+              <div class="ajuda-card-label">Como registrar parcelas com o chat</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a4">
+              Mencione a quantidade de vezes que dividiu a compra:<br><br>
+              <div class="ajuda-example">💬 "Comprei R$300 na Shein em 3x"</div><br>
+              A Fina calcula o valor de cada parcela automaticamente e cadastra na aba Parcelas, já dividindo o valor total pela quantidade informada.
+            </div>
+          </div>
+
+          <!-- DASHBOARD -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Visão Geral (Dashboard)</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a5')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-layout-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /> <path d="M5 16h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /> <path d="M15 12h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /> <path d="M15 4h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /></svg></div>
+              <div class="ajuda-card-label">Entenda o painel principal</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a5">
+              A aba <strong>Visão Geral</strong> reúne um resumo completo das suas finanças. Filtre por Dia, Semana, Mês ou Período personalizado e alterne entre <strong>Este mês</strong> e <strong>Total acumulado</strong> no topo da tela.<br><br>
+              Veja o <strong>Saldo do mês</strong>: se estiver negativo, aparece com sinal de menos (ex: -R$200,00) e o aviso "⚠ Você está no negativo"; se positivo, aparece "✓ Você está no positivo". Confira também o resumo de Gastos, Entradas, Metas ativas e Parcelas mensais em cards rápidos, além do gráfico de Gastos por categoria, o mesmo gráfico circular usado na aba Gastos.
+            </div>
+          </div>
+
+          <!-- ENTRADAS -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Aba de Entradas</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a6')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-arrow-down-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14" /> <path d="M9 18l3 3l3 -3" /> <path d="M12 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4" /></svg></div>
+              <div class="ajuda-card-label">Como cadastrar uma entrada variável</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a6">
+              Na aba Entradas, toque em <strong>"Nova entrada"</strong>, informe a descrição e o valor recebido. Você também pode marcar como pendente se ainda não recebeu o valor, assim ela fica separada em "Entradas pendentes" até você confirmar o recebimento.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a7')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-calendar-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v3" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h12" /> <path d="M20 14l2 2h-3" /> <path d="M20 18l2 -2" /> <path d="M19 16a3 3 0 1 0 2 5.236" /></svg></div>
+              <div class="ajuda-card-label">Como cadastrar uma entrada parcelada</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a7">
+              Toque em <strong>"Parcelada"</strong> na aba Entradas para receitas que chegam em parcelas, como um pagamento de cliente dividido em meses. Você pode acompanhar tudo filtrando por Dia, Semana, Mês ou Período personalizado no topo da tela.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a8')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3" /></svg></div>
+              <div class="ajuda-card-label">Como criar categorias personalizadas</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a8">
+              Toque em <strong>"Gerenciar categorias"</strong> dentro da aba Entradas (ou Gastos) para criar categorias do seu jeito, com emoji e nome personalizados. Elas passam a aparecer junto com as categorias padrão no filtro.
+            </div>
+          </div>
+
+          <!-- GASTOS -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Aba de Gastos</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a9')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-chart-pie-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9h9" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg></div>
+              <div class="ajuda-card-label">Como funciona a aba de Gastos</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a9">
+              Filtre seus gastos por Dia, Semana, Mês ou Período personalizado. Toque em <strong>"Filtrar por categoria"</strong> para ver só os gastos de uma categoria específica. A lista já inclui todas as categorias do app e as que você criou.<br><br>
+              Os gastos ficam organizados em duas listas: <strong>Confirmados</strong> e <strong>Pendentes</strong>. Um gasto pendente é aquele que você já sabe que vai ter, mas ainda não pagou. Confirme com um toque quando for pago.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a10')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" /> <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" /></svg></div>
+              <div class="ajuda-card-label">Como adicionar um gasto fixo mensal</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a10">
+              Para gastos que se repetem todo mês (aluguel, internet, assinaturas), cadastre-os manualmente todo mês através do botão de adicionar gasto, escolhendo a categoria correspondente (Aluguel, Internet, Assinatura, etc). Assim você mantém o histórico de cada mês separado.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a11')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M13.41 10.59l2.59 -2.59" /> <path d="M7 12a5 5 0 0 1 5 -5" /></svg></div>
+              <div class="ajuda-card-label">Como adicionar limites de gastos</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a11">
+              Toque em <strong>"Limites mensais"</strong> na aba Gastos. Escolha uma categoria e defina o valor máximo que deseja gastar nela por mês. A Fina avisa automaticamente quando você atingir 90% e 100% do limite definido.
+            </div>
+          </div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a12')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3" /></svg></div>
+              <div class="ajuda-card-label">Como criar categorias personalizadas</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a12">
+              Toque em <strong>"Gerenciar categorias"</strong> na aba Gastos, escolha um emoji e dê um nome para a sua categoria. Ela passa a aparecer no filtro de categorias e a Fina também aprende a reconhecê-la quando você mencionar o nome dela no chat.
+            </div>
+          </div>
+
+          <!-- CARTÕES -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Aba de Cartões</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a13')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-credit-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></svg></div>
+              <div class="ajuda-card-label">Como cadastrar seus cartões</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a13">
+              Na aba Cartões, toque em <strong>"Novo cartão"</strong> e informe: nome do cartão, instituição bancária (escolha entre os bancos mais comuns ou selecione <strong>"Outro"</strong> para digitar o nome de qualquer instituição que não esteja na lista), dia de fechamento, dia de vencimento, limite do cartão (opcional) e fatura atual (opcional).<br><br>
+              Cada cartão aparece como um cartão visual com a cor do seu tema, mostrando a fatura atual e uma barra de progresso do limite usado.
+            </div>
+          </div>
+
+          <!-- PARCELAS -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Aba de Parcelas</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a14')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-list-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5l1.5 1.5l2.5 -2.5" /> <path d="M3.5 11.5l1.5 1.5l2.5 -2.5" /> <path d="M3.5 17.5l1.5 1.5l2.5 -2.5" /> <path d="M11 6l9 0" /> <path d="M11 12l9 0" /> <path d="M11 18l9 0" /></svg></div>
+              <div class="ajuda-card-label">Controle das suas compras parceladas</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a14">
+              Use a barra de busca para encontrar uma parcela específica pelo nome. Toque em <strong>"+"</strong> para adicionar uma nova: informe nome, valor total e número de parcelas. O valor de cada parcela é calculado automaticamente, mas você pode ativar <strong>"Definir valor da parcela manualmente"</strong> se preferir informar o valor você mesma.<br><br>
+              Informe também quantas parcelas já foram pagas, a categoria, a próxima data de pagamento e, se quiser, associe a um cartão já cadastrado.
+            </div>
+          </div>
+
+          <!-- DÍVIDAS -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Aba de Dívidas</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a15')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-receipt-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2" /> <path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5m2 0v1.5m0 -9v1.5" /></svg></div>
+              <div class="ajuda-card-label">Registre e acompanhe suas dívidas</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a15">
+              Cadastre o nome, valor total e vencimento da dívida. Se for parcelada, ative a opção de dividir em parcelas mensais e informe a quantidade. A Fina calcula automaticamente o valor de cada parcela.<br><br>
+              O topo da tela mostra o <strong>total devido</strong> somando todas as suas dívidas ativas. Quando você não tiver nenhuma dívida cadastrada, aparece a mensagem "Parabéns, você não tem dívidas!". Ao quitar uma dívida totalmente, ela vai automaticamente para <strong>Suas conquistas financeiras</strong>.
+            </div>
+          </div>
+
+          <!-- METAS -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Aba de Metas</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a16')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M7 12a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg></div>
+              <div class="ajuda-card-label">Crie e acompanhe suas metas financeiras</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a16">
+              Toque em <strong>"+"</strong> para criar uma meta nova. Informe o nome, escolha a categoria (viagem, veículo, casa, educação, investimento, emergência ou outro), o tipo de prazo (curto, médio ou longo), um ícone ou emoji personalizado, o valor que você já tem guardado e o valor total da meta.<br><br>
+              Ao atingir 100% do valor da meta, ela é movida automaticamente para <strong>Suas conquistas financeiras</strong>, visível na aba Dívidas.
+            </div>
+          </div>
+
+          <!-- BACKUP -->
+          <div class="ajuda-section-title" style="margin-top:20px;">Backup dos seus dados</div>
+
+          <div class="ajuda-card" onclick="toggleAjuda('a17')">
+            <div class="ajuda-card-header">
+              <div class="ajuda-icon"><svg class="ti ti-database-export" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6c0 1.657 3.582 3 8 3s8 -1.343 8 -3s-3.582 -3 -8 -3s-8 1.343 -8 3" /> <path d="M4 6v6c0 1.657 3.582 3 8 3c1.118 0 2.183 -.086 3.15 -.241" /> <path d="M20 12v-6" /> <path d="M4 12v6c0 1.657 3.582 3 8 3c.157 0 .312 -.002 .466 -.005" /> <path d="M16 19h6" /> <path d="M19 16l3 3l-3 3" /></svg></div>
+              <div class="ajuda-card-label">Como fazer backup dos seus dados</div>
+              <svg class="ti ti-chevron-down ajuda-arrow" id="arr-a17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6" /></svg>
+            </div>
+            <div class="ajuda-body" id="body-a17">
+              Na aba Perfil, em <strong>"Dados e backup"</strong>, toque em <strong>"Exportar dados"</strong> para salvar um arquivo com todas as suas informações no seu celular. É um backup de segurança que você pode guardar onde quiser.<br><br>
+              Se precisar restaurar, toque em <strong>"Importar dados"</strong> e selecione o arquivo de backup salvo anteriormente. Atenção: importar um backup substitui os dados atuais do app, então faça isso só quando tiver certeza.<br><br>
+              Recomendamos exportar um backup de vez em quando, principalmente antes de trocar de celular ou limpar os dados do navegador.
+            </div>
+          </div>
+
+          <!-- CONTATO -->
+          <div class="ajuda-section-title" style="margin-top:20px;justify-content:center;text-align:center;width:100%;">Ainda com dúvidas?</div>
+          <div class="ajuda-card" style="cursor:default;text-align:center;" onclick="event.stopPropagation()">
+            <div style="padding:16px 18px;">
+              <div style="font-size:13px;color:var(--gray-500);line-height:1.55;margin-bottom:16px;text-align:center;">Fale conosco via WhatsApp e te ajudamos a usar o Fina no seu ritmo.</div>
+              <button onclick="abrirWhatsApp()" style="width:100%;padding:14px;background:linear-gradient(135deg,#25D366,#128C7E);color:white;border:none;border-radius:14px;font-size:14px;font-weight:800;font-family:'Montserrat',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,0.35);transition:all 0.18s;">
+                <svg class="ti ti-brand-whatsapp" style="font-size:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" /> <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" /></svg> Falar com o suporte
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-scroll" id="navScroll">
+      <button class="nav-btn active" id="nav-home" onclick="switchScreen('home')"><div class="nav-indicator"></div><svg class="ti ti-home-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M10 12h4v4h-4l0 -4" /></svg><span>Início</span></button>
+      <button class="nav-btn" id="nav-chat" onclick="switchScreen('chat')"><div class="nav-indicator"></div><svg class="ti ti-message-circle-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1" /></svg><span>Chat</span></button>
+      <button class="nav-btn" id="nav-dashboard" onclick="switchScreen('dashboard')"><div class="nav-indicator"></div><svg class="ti ti-layout-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /> <path d="M5 16h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /> <path d="M15 12h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /> <path d="M15 4h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /></svg><span>Visão</span></button>
+      <button class="nav-btn" id="nav-gastos" onclick="switchScreen('gastos')"><div class="nav-indicator"></div><svg class="ti ti-chart-pie-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9h9" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg><span>Gastos</span></button>
+      <button class="nav-btn" id="nav-entradas" onclick="switchScreen('entradas')"><div class="nav-indicator"></div><svg class="ti ti-arrow-down-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14" /> <path d="M9 18l3 3l3 -3" /> <path d="M12 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4" /></svg><span>Entradas</span></button>
+      <button class="nav-btn" id="nav-metas" onclick="switchScreen('metas')"><div class="nav-indicator"></div><svg class="ti ti-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M7 12a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" /> <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg><span>Metas</span></button>
+      <button class="nav-btn" id="nav-dividas" onclick="switchScreen('dividas')"><div class="nav-indicator"></div><svg class="ti ti-receipt-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2" /> <path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5m2 0v1.5m0 -9v1.5" /></svg><span>Dívidas</span></button>
+      <button class="nav-btn" id="nav-parcelas" onclick="switchScreen('parcelas')"><div class="nav-indicator"></div><svg class="ti ti-list-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5l1.5 1.5l2.5 -2.5" /> <path d="M3.5 11.5l1.5 1.5l2.5 -2.5" /> <path d="M3.5 17.5l1.5 1.5l2.5 -2.5" /> <path d="M11 6l9 0" /> <path d="M11 12l9 0" /> <path d="M11 18l9 0" /></svg><span>Parcelas</span></button>
+      <button class="nav-btn" id="nav-cartoes" onclick="switchScreen('cartoes')"><div class="nav-indicator"></div><svg class="ti ti-credit-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></svg><span>Cartões</span></button>
+      <button class="nav-btn" id="nav-perfil" onclick="switchScreen('perfil')"><div class="nav-indicator"></div><svg class="ti ti-user-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 10a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" /></svg><span>Perfil</span></button>
+    </div>
+    <div class="nav-arrow" id="navArrow" onclick="scrollNav()">
+      <svg class="ti ti-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+    </div>
+  </nav>
+
+  <!-- MODAL GASTO -->
+  <div class="modal-overlay" id="modalGasto" onclick="closeModalClick(event,'modalGasto')">
+    <div class="modal-sheet">
+      <div class="modal-title-row"><div class="modal-title">Nova movimentação</div><button type="button" class="modal-close-btn" onclick="closeModal('modalGasto')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group"><label class="form-label">Tipo</label>
+        <div class="type-btns">
+          <button class="type-btn sel-neg" id="typeNeg" onclick="selectType('neg')"><svg class="ti ti-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /></svg> Gasto</button>
+          <button class="type-btn" id="typePos" onclick="selectType('pos')"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg> Entrada</button>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="formDesc" placeholder="Ex: Skincare vitamina C"/></div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" id="formVal" type="number" placeholder="0,00" step="0.01"/></div>
+      <div class="form-group" id="formCatGroup"><label class="form-label">Categoria</label>
+        <select class="form-select" id="formCat">
+          <option value="maquiagem">Maquiagem</option>
+          <option value="skincare">Skincare</option>
+          <option value="beleza">Beleza</option>
+          <option value="cuidados">Cuidados pessoais</option>
+          <option value="cabelo">Cabelo</option>
+          <option value="unhas">Unhas</option>
+          <option value="perfume">Perfumaria</option>
+          <option value="farmacia">Farmácia</option>
+          <option value="saude">Saúde</option>
+          <option value="academia">Academia</option>
+          <option value="terapia">Terapia</option>
+          <option value="transporte">Transporte</option>
+          <option value="combustivel">Combustível</option>
+          <option value="estacionamento">Estacionamento</option>
+          <option value="delivery">iFood / Delivery</option>
+          <option value="restaurante">Restaurante</option>
+          <option value="feira">Feira / Mercado</option>
+          <option value="cafe">Café</option>
+          <option value="bebidas">Bebidas</option>
+          <option value="shopee">Shopee</option>
+          <option value="shein">Shein</option>
+          <option value="amazon">Amazon</option>
+          <option value="mercadolivre">Mercado Livre</option>
+          <option value="roupas">Roupas</option>
+          <option value="calcados">Calçados</option>
+          <option value="eletronicos">Eletrônicos</option>
+          <option value="aluguel">Aluguel</option>
+          <option value="condominio">Condomínio</option>
+          <option value="energia">Energia</option>
+          <option value="agua">Água</option>
+          <option value="internet">Internet</option>
+          <option value="casa">Casa</option>
+          <option value="moveis">Móveis</option>
+          <option value="educacao">Educação</option>
+          <option value="curso">Curso</option>
+          <option value="livros">Livros</option>
+          <option value="trabalho">Trabalho</option>
+          <option value="lazer">Lazer</option>
+          <option value="viagem">Viagem</option>
+          <option value="streaming">Streaming</option>
+          <option value="cinema">Cinema</option>
+          <option value="pet">Pet</option>
+          <option value="impostos">Impostos</option>
+          <option value="assinatura">Assinatura</option>
+          <option value="presente">Presente</option>
+          <option value="doacao">Doação</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:11px 14px;background:var(--amber-light);border-radius:12px;border:1px solid rgba(217,119,6,0.2);">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Marcar como pendente</div>
+          <div style="font-size:11px;color:var(--gray-500);">Aparecerá em gastos pendentes</div>
+        </div>
+        <input type="checkbox" id="formPendente" style="width:18px;height:18px;accent-color:var(--p1);cursor:pointer;"/>
+      </div>
+      <button class="btn-primary" onclick="saveGasto()">Registrar</button>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL NOME -->
+  <div class="modal-overlay" id="modalEditNome" onclick="closeModalClick(event,'modalEditNome')">
+    <div class="modal-sheet">
+      <div class="modal-title-row"><div class="modal-title">Editar nome</div><button type="button" class="modal-close-btn" onclick="closeModal('modalEditNome')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group"><label class="form-label">Seu nome</label><input class="form-input" id="editNomeInput" placeholder="Como quer ser chamada?"/></div>
+      <button class="btn-primary" onclick="saveNome()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- MODAL TEMA -->
+  <div class="modal-overlay" id="modalTema" onclick="closeModalClick(event,'modalTema')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title">Cor do tema</div><button type="button" class="modal-close-btn" onclick="closeModal('modalTema')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:18px;">A cor escolhida muda todo o layout do app</p>
+      <div class="theme-grid" id="themeGrid"></div>
+      <button class="btn-primary" style="margin-top:24px;" onclick="closeModal('modalTema')">Confirmar</button>
+    </div>
+  </div>
+
+  <!-- MODAL TELEFONE -->
+  <div class="modal-overlay" id="modalEditTelefone" onclick="closeModalClick(event,'modalEditTelefone')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title">Editar telefone</div><button type="button" class="modal-close-btn" onclick="closeModal('modalEditTelefone')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group">
+        <label class="form-label">Telefone / WhatsApp</label>
+        <input class="form-input" id="editTelefoneInput" type="tel" placeholder="(00) 00000-0000"/>
+      </div>
+      <button class="btn-primary" onclick="saveTelefone()">Salvar</button>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- MODAL META (nova) -->
+  <div class="modal-overlay" id="modalMeta" onclick="closeModalClick(event,'modalMeta')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title" id="metaModalTitle">Nova meta</div><button type="button" class="modal-close-btn" onclick="closeModal('modalMeta')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group">
+        <label class="form-label">Nome da meta</label>
+        <input class="form-input" id="metaNome" placeholder="Ex: Viagem para Europa"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-select" id="metaCat">
+          <option value="viagem">✈️ Viagem</option>
+          <option value="veiculo">🚗 Veículo</option>
+          <option value="casa">🏠 Casa</option>
+          <option value="educacao">📚 Educação</option>
+          <option value="investimento">📈 Investimento</option>
+          <option value="emergencia">🛡️ Emergência</option>
+          <option value="outro">⭐ Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de meta</label>
+        <div style="display:flex;gap:8px;">
+          <button class="type-btn" id="metaPrazo_curto" onclick="selectMetaPrazo('curto')" style="flex:1;font-size:12px;">Curto prazo</button>
+          <button class="type-btn" id="metaPrazo_medio" onclick="selectMetaPrazo('medio')" style="flex:1;font-size:12px;">Médio prazo</button>
+          <button class="type-btn" id="metaPrazo_longo" onclick="selectMetaPrazo('longo')" style="flex:1;font-size:12px;">Longo prazo</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ícone ou emoji</label>
+        <div id="metaIconGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <button class="meta-icon-btn active" onclick="selectMetaIcon('✈️','this')">✈️</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('🚗','this')">🚗</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('🏠','this')">🏠</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('📚','this')">📚</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('📈','this')">📈</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('🛡️','this')">🛡️</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('💎','this')">💎</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('🎯','this')">🎯</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('💰','this')">💰</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('🌙','this')">🌙</button>
+          <button class="meta-icon-btn" onclick="selectMetaIcon('⭐','this')">⭐</button>
+        </div>
+        <input class="form-input" id="metaEmojiCustom" placeholder="Ou digite seu emoji aqui..." maxlength="4" style="font-size:20px;text-align:center;"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor atual (R$)</label>
+        <input class="form-input" id="metaAtual" type="number" placeholder="0,00" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor da meta (R$)</label>
+        <input class="form-input" id="metaTotal" type="number" placeholder="0,00" step="0.01"/>
+      </div>
+      <button class="btn-primary" id="metaSaveBtn" onclick="saveMeta()">Criar meta</button>
+    </div>
+  </div>
+
+  <!-- MODAL DÍVIDA -->
+  <div class="modal-overlay" id="modalDivida" onclick="closeModalClick(event,'modalDivida')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title" id="dividaModalTitle">Nova dívida</div><button type="button" class="modal-close-btn" onclick="closeModal('modalDivida')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="dividaNome" placeholder="Ex: Empréstimo banco"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor total (R$)</label>
+        <input class="form-input" id="dividaValor" type="number" placeholder="0,00" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data de vencimento</label>
+        <input class="form-input" id="dividaVenc" type="date"/>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <label class="form-label" style="margin:0;">Dividir em parcelas mensais</label>
+          <div class="toggle-wrap" onclick="toggleDividaParcelado()">
+            <div class="toggle-track" id="toggleDividaTrack"><div class="toggle-thumb" id="toggleDividaThumb"></div></div>
+          </div>
+        </div>
+        <div id="dividaParcelasWrap" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Número de parcelas</label>
+            <input class="form-input" id="dividaQtd" type="number" placeholder="Ex: 12" min="2" oninput="calcDividaParcela()"/>
+          </div>
+          <div style="background:var(--p-pale);border-radius:12px;padding:12px 14px;border:1px solid var(--p-border);">
+            <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px;">Valor da parcela mensal</div>
+            <div id="dividaParcelaCalc" style="font-size:18px;font-weight:800;color:var(--p1);">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" id="dividaSaveBtn" onclick="saveDivida()">Registrar dívida</button>
+    </div>
+  </div>
+
+  <!-- MODAL PARCELA (nova) -->
+  <div class="modal-overlay" id="modalParcela" onclick="closeModalClick(event,'modalParcela')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title" id="parcelaModalTitle">Nova parcela</div><button type="button" class="modal-close-btn" onclick="closeModal('modalParcela')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="pDesc" placeholder="Ex: Shopee — kit skincare"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor total (R$)</label>
+        <input class="form-input" id="pTotal" type="number" placeholder="0,00" step="0.01" oninput="autoCalcParcela()"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total de parcelas</label>
+        <input class="form-input" id="pQtd" type="number" placeholder="Ex: 6" min="2" oninput="autoCalcParcela()"/>
+      </div>
+      <!-- Toggle valor manual -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:12px 14px;background:var(--p-pale);border-radius:12px;border:1px solid var(--p-border);">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Definir valor da parcela manualmente</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px;" id="pValorLabel">Valor calculado automaticamente</div>
+        </div>
+        <div class="toggle-wrap" onclick="toggleParcelaManual()">
+          <div class="toggle-track" id="toggleParcelaTrack"><div class="toggle-thumb" id="toggleParcelaThumb"></div></div>
+        </div>
+      </div>
+      <div id="parcelaManualWrap" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Valor da parcela mensal (R$)</label>
+          <input class="form-input" id="pValorManual" type="number" placeholder="Quanto você paga por mês" step="0.01"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parcelas já pagas</label>
+        <input class="form-input" id="pPagas" type="number" placeholder="0" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-select" id="pCat">
+          <option value="maquiagem">Maquiagem</option>
+          <option value="skincare">Skincare</option>
+          <option value="beleza">Beleza</option>
+          <option value="cuidados">Cuidados pessoais</option>
+          <option value="cabelo">Cabelo</option>
+          <option value="unhas">Unhas</option>
+          <option value="perfume">Perfumaria</option>
+          <option value="farmacia">Farmácia</option>
+          <option value="saude">Saúde</option>
+          <option value="academia">Academia</option>
+          <option value="terapia">Terapia</option>
+          <option value="transporte">Transporte</option>
+          <option value="combustivel">Combustível</option>
+          <option value="estacionamento">Estacionamento</option>
+          <option value="delivery">iFood / Delivery</option>
+          <option value="restaurante">Restaurante</option>
+          <option value="feira">Feira / Mercado</option>
+          <option value="cafe">Café</option>
+          <option value="bebidas">Bebidas</option>
+          <option value="shopee">Shopee</option>
+          <option value="shein">Shein</option>
+          <option value="amazon">Amazon</option>
+          <option value="mercadolivre">Mercado Livre</option>
+          <option value="roupas">Roupas</option>
+          <option value="calcados">Calçados</option>
+          <option value="eletronicos">Eletrônicos</option>
+          <option value="aluguel">Aluguel</option>
+          <option value="condominio">Condomínio</option>
+          <option value="energia">Energia</option>
+          <option value="agua">Água</option>
+          <option value="internet">Internet</option>
+          <option value="casa">Casa</option>
+          <option value="moveis">Móveis</option>
+          <option value="educacao">Educação</option>
+          <option value="curso">Curso</option>
+          <option value="livros">Livros</option>
+          <option value="trabalho">Trabalho</option>
+          <option value="lazer">Lazer</option>
+          <option value="viagem">Viagem</option>
+          <option value="streaming">Streaming</option>
+          <option value="cinema">Cinema</option>
+          <option value="pet">Pet</option>
+          <option value="impostos">Impostos</option>
+          <option value="assinatura">Assinatura</option>
+          <option value="presente">Presente</option>
+          <option value="doacao">Doação</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Próxima data de pagamento</label>
+        <input class="form-input" id="pDataPgto" type="date"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cartão (opcional)</label>
+        <select class="form-select" id="pCartaoSel">
+          <option value="">Nenhum</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="parcelaSaveBtn" onclick="saveParcela()">Adicionar parcela</button>
+    </div>
+  </div>
+
+  <!-- MODAL CARTÃO -->
+  <div class="modal-overlay" id="modalCartao" onclick="closeModalClick(event,'modalCartao')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title" id="cartaoModalTitle">Novo cartão</div><button type="button" class="modal-close-btn" onclick="closeModal('modalCartao')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div class="form-group">
+        <label class="form-label">Nome do cartão</label>
+        <input class="form-input" id="cartaoNome" placeholder="Ex: Nubank Roxinho"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Instituição bancária</label>
+        <select class="form-select" id="cartaoBanco" onchange="toggleCartaoBancoOutro()">
+          <option>Nubank</option><option>Itaú</option><option>Bradesco</option>
+          <option>Santander</option><option>Caixa</option><option>Banco do Brasil</option>
+          <option>Inter</option><option>C6 Bank</option><option>PicPay</option>
+          <option>Mercado Pago</option><option>XP</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group" id="cartaoBancoOutroWrap" style="display:none;">
+        <label class="form-label">Nome da instituição</label>
+        <input class="form-input" id="cartaoBancoOutro" placeholder="Digite o nome do banco/instituição"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Dia fechamento</label>
+          <input class="form-input" id="cartaoFecha" type="number" placeholder="Ex: 20" min="1" max="31"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dia vencimento</label>
+          <input class="form-input" id="cartaoVence" type="number" placeholder="Ex: 27" min="1" max="31"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Limite do cartão — opcional (R$)</label>
+        <input class="form-input" id="cartaoLimite" type="number" placeholder="0,00" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fatura atual — opcional (R$)</label>
+        <input class="form-input" id="cartaoFatura" type="number" placeholder="0,00" step="0.01"/>
+      </div>
+      <button class="btn-primary" id="cartaoSaveBtn" onclick="saveCartao()">Adicionar cartão</button>
+    </div>
+  </div>
+
+  <!-- MODAL LIMITES MENSAIS -->
+  <div class="modal-overlay" id="modalLimites" onclick="closeModalClick(event,'modalLimites')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title">Limites mensais</div><button type="button" class="modal-close-btn" onclick="closeModal('modalLimites')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <p style="font-size:12px;color:var(--gray-500);margin-bottom:16px;">Defina o limite de gasto mensal por categoria. Você receberá um aviso ao se aproximar.</p>
+      <div id="limitesContent"></div>
+      <button class="btn-primary" style="margin-top:16px;" onclick="salvarLimites()">Salvar limites</button>
+    </div>
+  </div>
+
+  <!-- MODAL CATEGORIAS PERSONALIZADAS -->
+  <div class="modal-overlay" id="modalCategorias" onclick="closeModalClick(event,'modalCategorias')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title">Gerenciar categorias</div><button type="button" class="modal-close-btn" onclick="closeModal('modalCategorias')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <p style="font-size:12px;color:var(--gray-500);margin-bottom:14px;">Crie categorias personalizadas para organizar seus gastos.</p>
+      <div id="categoriasCustomList"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <input class="form-input" id="novaCatEmoji" placeholder="😊" style="width:60px;text-align:center;font-size:20px;padding:10px;"/>
+        <input class="form-input" id="novaCatNome" placeholder="Nome da categoria" style="flex:1;"/>
+        <button onclick="addCatCustom()" style="padding:10px 14px;background:var(--grad);color:white;border:none;border-radius:14px;font-size:18px;cursor:pointer;"><svg class="ti ti-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FILTRO DE CATEGORIA -->
+  <div class="modal-overlay" id="modalFiltroCategoria" onclick="closeModalClick(event,'modalFiltroCategoria')">
+    <div class="modal-sheet">
+      
+      <div class="modal-title-row"><div class="modal-title">Filtrar por categoria</div><button type="button" class="modal-close-btn" onclick="closeModal('modalFiltroCategoria')" aria-label="Fechar"><svg class="ti ti-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></button></div>
+      <div id="filtroCategoriaList" style="max-height:50vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- CROP DE AVATAR -->
+  <div class="crop-overlay" id="cropOverlay" style="display:none;">
+    <div class="crop-title">Ajustar foto de perfil</div>
+    <div class="crop-sub">Arraste para reposicionar<br>Pinça ou use o controle abaixo para dar zoom</div>
+    <canvas id="cropCanvas" width="280" height="280"></canvas>
+    <div class="crop-zoom-row">
+      <span class="crop-zoom-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg></span>
+      <input type="range" id="cropZoomRange" min="0.1" max="5" step="0.005" value="1" oninput="onCropZoom(this.value)"/>
+      <span class="crop-zoom-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M7 10l6 0"/><path d="M10 7l0 6"/><path d="M21 21l-6 -6"/></svg></span>
+    </div>
+    <div class="crop-controls">
+      <button class="crop-btn-cancel" onclick="closeCropper()">Cancelar</button>
+      <button class="crop-btn-confirm" onclick="confirmCrop()">Usar esta foto</button>
+    </div>
+  </div>
+
+  <!-- CUSTOM CONFIRM DIALOG -->
+  <div class="confirm-overlay" id="customConfirmOverlay" style="display:none;">
+    <div class="confirm-dialog">
+      <div class="confirm-dialog-icon" id="confirmDialogIcon"></div>
+      <h3 id="confirmDialogTitle"></h3>
+      <p id="confirmDialogMsg"></p>
+      <div class="confirm-dialog-btns">
+        <button class="confirm-btn-cancel" onclick="closeCustomConfirm()">Cancelar</button>
+        <button class="confirm-btn-ok" id="confirmDialogBtn" onclick="executeCustomConfirm()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
